@@ -1,9 +1,10 @@
 {
   "name": "hate",
   "version": "1.0.0",
-  "description": "",
-  "main": "discord.js",
+  "description": "Admin auth website and Roblox whitelist backend",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
