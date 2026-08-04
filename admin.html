@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .logout {
+      color: white;
+      background: #ef4444;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .panel {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    form {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0 24px;
+    }
+
+    input {
+      flex: 1;
+      min-width: 220px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #1f2937;
+      border-radius: 10px;
+      border: 1px solid #374151;
+    }
+
+    .remove {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <h1>Whitelist Manager</h1>
+      <a class="logout" href="/logout">Logout</a>
+    </div>
+
+    <div class="panel">
+      <form id="addUserForm">
+        <input id="robloxUserId" type="number" min="1" placeholder="Roblox User ID" required />
+        <button type="submit">Add User</button>
+      </form>
+
+      <ul id="userList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const userList = document.getElementById('userList');
+
+    async function loadUsers() {
+      const res = await fetch('/api/allowed');
+      if (!res.ok) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const data = await res.json();
+      userList.innerHTML = '';
+
+      if (!data.allowed.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No authorized users yet.';
+        userList.appendChild(li);
+        return;
+      }
+
+      for (const id of data.allowed) {
+        const li = document.createElement('li');
+        const label = document.createElement('span');
+        label.textContent = `Roblox User ID: ${id}`;
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Remove';
+        btn.className = 'remove';
+        btn.addEventListener('click', async () => {
+          await fetch(`/api/allowed/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          loadUsers();
+        });
+
+        li.appendChild(label);
+        li.appendChild(btn);
+        userList.appendChild(li);
+      }
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const input = document.getElementById('robloxUserId');
+      const robloxUserId = input.value.trim();
+
+      if (!robloxUserId) return;
+
+      await fetch('/api/allowed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ robloxUserId })
+      });
+
+      input.value = '';
+      loadUsers();
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>
